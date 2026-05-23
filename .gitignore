@@ -1,0 +1,12 @@
+# Local operator config (may contain secrets) — copy from config.example.yaml
+config.yaml
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/

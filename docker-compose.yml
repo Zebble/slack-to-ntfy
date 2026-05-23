@@ -1,0 +1,15 @@
+services:
+  slack-to-ntfy:
+    build: .
+    image: slack-to-ntfy:latest
+    container_name: slack-to-ntfy
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Referenced as ${NTFY_TOKEN} / ${INBOUND_TOKEN} in config.yaml.
+      - NTFY_TOKEN=${NTFY_TOKEN:-}
+      - INBOUND_TOKEN=${INBOUND_TOKEN:-}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
