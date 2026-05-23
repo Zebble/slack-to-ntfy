@@ -7,6 +7,7 @@ import os
 from contextlib import asynccontextmanager
 
 import httpx
+from dotenv import find_dotenv, load_dotenv
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
@@ -14,6 +15,13 @@ from . import __version__
 from .config import AppConfig, load_config
 from .forwarder import forward
 from .slack import build_context, parse_slack_request
+
+# Load a .env from the working directory (if present) so non-Docker runs pick
+# up the same vars the compose file injects. Existing environment variables
+# always take precedence.
+_dotenv = find_dotenv(usecwd=True)
+if _dotenv:
+    load_dotenv(_dotenv)
 
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO").upper(),

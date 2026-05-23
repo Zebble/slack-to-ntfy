@@ -32,9 +32,13 @@ Templates use Jinja2, which shares Proxmox's `{{ variable }}` syntax.
 ```bash
 git clone <this-repo> && cd slack-to-ntfy
 cp config.example.yaml config.yaml      # edit topics/headers to taste
-export NTFY_TOKEN=tk_your_ntfy_token    # referenced as ${NTFY_TOKEN} in config
+cp .env.example .env                    # set NTFY_TOKEN etc. (gitignored)
 docker compose up -d --build
 ```
+
+Both `config.yaml` and `.env` are gitignored so your topics and tokens stay
+local. Compose auto-loads `.env`; the values flow into the container and are
+referenced from `config.yaml` as `${NTFY_TOKEN}`.
 
 Send a test notification:
 
@@ -99,8 +103,16 @@ forward, `404`/`403`/`401` for unknown/disabled/unauthorized endpoints, and
 
 ## Configuration via environment
 
+Set these in `.env` (see [`.env.example`](.env.example)). The app loads `.env`
+on startup via `python-dotenv`, and docker compose loads it for `${VAR}`
+interpolation — so the same file works for Docker and local runs. Real
+environment variables always override `.env`.
+
 | Variable          | Default                | Purpose |
 |-------------------|------------------------|---------|
+| `NTFY_TOKEN`      | —                      | ntfy token; referenced as `${NTFY_TOKEN}` in `config.yaml` |
+| `INBOUND_TOKEN`   | —                      | Inbound token for endpoints using `inbound_token` |
+| `HOST_PORT`       | `8080`                 | Host port published by docker compose |
 | `CONFIG_PATH`     | `/config/config.yaml`  | Path to the config file |
 | `LOG_LEVEL`       | `INFO`                 | Logging verbosity |
 | `FORWARD_TIMEOUT` | `10`                   | ntfy request timeout (seconds) |
@@ -110,5 +122,8 @@ forward, `404`/`403`/`401` for unknown/disabled/unauthorized endpoints, and
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt pytest
-pytest
+cp .env.example .env        # optional; loaded automatically on startup
+cp config.example.yaml config.yaml
+CONFIG_PATH=./config.yaml uvicorn app.main:app --reload   # run locally
+pytest                                                    # run tests
 ```
