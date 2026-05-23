@@ -26,7 +26,7 @@ endpoints:
   - name: dc_proxmox_alerts
     enabled: true
     method: POST
-    url: "https://ntfy.wwworks.com/dc_proxmox_alerts"
+    url: "https://ntfy.example.com/dc_proxmox_alerts"
     headers:
       # Sent only when a token is configured. Headers that render empty are
       # dropped, so this works fine against ntfy instances without auth.
@@ -44,7 +44,7 @@ endpoints:
   # and requires an inbound token for hardening.
   - name: app_notifications
     enabled: true
-    url: "https://ntfy.wwworks.com/app_notifications"
+    url: "https://ntfy.example.com/app_notifications"
     headers:
       Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
       Title: "{{ title }}"
