@@ -54,14 +54,20 @@ def client(tmp_path, monkeypatch):
         yield c
 
 
-def test_index_lists_endpoints(client):
-    data = client.get("/").json()
-    names = {e["name"] for e in data["endpoints"]}
-    assert names == {"alerts", "secured"}
+def test_root_is_not_found(client):
+    # No index/listing route is exposed.
+    assert client.get("/").status_code == 404
+
+
+def test_docs_and_schema_disabled(client):
+    assert client.get("/docs").status_code == 404
+    assert client.get("/redoc").status_code == 404
+    assert client.get("/openapi.json").status_code == 404
 
 
 def test_healthz(client):
-    assert client.get("/healthz").json()["status"] == "ok"
+    body = client.get("/healthz").json()
+    assert body == {"status": "ok"}  # no version / fingerprint leaked
 
 
 def test_hook_forwards_slack_payload(client):
@@ -89,14 +95,28 @@ def test_unknown_endpoint_404(client):
     assert client.post("/hook/nope", json={"text": "x"}).status_code == 404
 
 
-def test_inbound_token_required(client):
-    assert client.post("/hook/secured", json={"text": "x"}).status_code == 401
+def test_inbound_auth_failure_is_indistinguishable_from_unknown(client):
+    # Missing/bad inbound token returns the same 404 as an unknown endpoint,
+    # so token-protected endpoints can't be enumerated.
+    unknown = client.post("/hook/nope", json={"text": "x"})
+    no_token = client.post("/hook/secured", json={"text": "x"})
+    assert no_token.status_code == 404
+    assert no_token.json() == unknown.json()
+
     ok = client.post(
         "/hook/secured",
         json={"text": "x"},
         headers={"X-Slack-To-Ntfy-Token": "letmein"},
     )
     assert ok.status_code == 200
+
+
+def test_body_too_large_rejected(client):
+    big = "x" * 70000
+    resp = client.post(
+        "/hook/alerts", content=big, headers={"Content-Type": "text/plain"}
+    )
+    assert resp.status_code == 413
 
 
 def test_form_encoded_payload(client):

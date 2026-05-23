@@ -125,12 +125,36 @@ the (secret-ish) URL path is the only gate, just like a Slack webhook URL.
 | Method & path        | Purpose |
 |----------------------|---------|
 | `POST /hook/<name>`  | Receive a Slack-format payload and forward to the named ntfy target |
-| `GET /`              | List configured endpoints |
-| `GET /healthz`       | Health check (used by the container healthcheck) |
+| `GET /healthz`       | Liveness check; returns `{"status":"ok"}` |
 
 A `POST /hook/<name>` returns `200` with `{"ntfy_status": ...}` on a successful
-forward, `404`/`403`/`401` for unknown/disabled/unauthorized endpoints, and
-`502` if ntfy is unreachable or returns an error.
+forward, a generic `404` for unknown / disabled / unauthorized endpoints, `413`
+if the body exceeds the size cap, and `502` if ntfy is unreachable or errors.
+
+## Hardening for public deployment
+
+This service is meant to sit behind a TLS-terminating reverse proxy (e.g.
+NPMPlus). The app itself is locked down for an internet-facing deployment:
+
+- **No discovery surface.** There is no index/listing route, and the
+  interactive docs and OpenAPI schema (`/docs`, `/redoc`, `/openapi.json`) are
+  disabled. `/healthz` returns only `{"status":"ok"}` — no version.
+- **No endpoint enumeration.** Unknown, disabled, and unauthorized requests all
+  return an identical `404`, so probing `/hook/<guess>` can't reveal which
+  endpoints (or token-protected endpoints) exist. Real reasons are logged
+  server-side only.
+- **Body size cap.** Requests larger than `MAX_BODY_BYTES` (default 64 KiB) are
+  rejected with `413` before any parsing.
+- **No server fingerprint.** The `Server` response header is suppressed.
+- **Optional Host allowlist.** Set `ALLOWED_HOSTS` to reject requests whose
+  `Host` header doesn't match (e.g. direct-to-IP scans).
+
+Recommended for a public instance:
+
+- Give **every** endpoint an `inbound_token` (the URL path alone is only
+  secret-ish), and put real auth tokens on your ntfy topics.
+- At the proxy, restrict to the methods/paths you use, add rate limiting, and
+  consider an IP allowlist if your sources have stable addresses.
 
 ## Configuration via environment
 
@@ -149,6 +173,8 @@ all reach the container. The fixed knobs are:
 | `CONFIG_PATH`     | `/config/config.yaml`  | Path to the config file |
 | `LOG_LEVEL`       | `INFO`                 | Logging verbosity |
 | `FORWARD_TIMEOUT` | `10`                   | ntfy request timeout (seconds) |
+| `MAX_BODY_BYTES`  | `65536`                | Max inbound request body size; larger → `413` |
+| `ALLOWED_HOSTS`   | _(unset)_              | Comma-separated `Host` allowlist; unset disables the check |
 
 ## Development
 
