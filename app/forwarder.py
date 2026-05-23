@@ -30,12 +30,19 @@ def _render(template: str, context: dict[str, Any]) -> str:
 def build_request(
     endpoint: EndpointConfig, context: dict[str, Any]
 ) -> tuple[str, str, dict[str, str], str]:
-    """Return (method, url, headers, body) with all templates rendered."""
+    """Return (method, url, headers, body) with all templates rendered.
+
+    Headers that render to an empty/whitespace-only value are dropped, so a
+    template like ``{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}``
+    simply omits the header when (for example) no NTFY_TOKEN is configured.
+    """
     full_context = {**context, "secrets": endpoint.secrets}
     url = _render(endpoint.url, full_context)
-    headers = {
-        name: _render(value, full_context) for name, value in endpoint.headers.items()
-    }
+    headers: dict[str, str] = {}
+    for name, value in endpoint.headers.items():
+        rendered = _render(value, full_context).strip()
+        if rendered:
+            headers[name] = rendered
     body = _render(endpoint.body, full_context)
     return endpoint.method, url, headers, body
 

@@ -28,13 +28,16 @@ endpoints:
     method: POST
     url: "https://ntfy.wwworks.com/dc_proxmox_alerts"
     headers:
-      Authorization: "Bearer {{ secrets.token }}"
+      # Sent only when a token is configured. Headers that render empty are
+      # dropped, so this works fine against ntfy instances without auth.
+      Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
       Title: "DC PVE - {{ title }}"
       Priority: "{{ priority }}"
       Tags: "computer"
     body: "{{ message }}"
     secrets:
-      # Pulled from the NTFY_TOKEN env var; falls back to empty if unset.
+      # Optional (but recommended). Pulled from the NTFY_TOKEN env var;
+      # empty if unset, in which case the Authorization header is omitted.
       token: "${NTFY_TOKEN}"
 
   # A second target that maps Slack's emoji + color onto ntfy tags/priority,
@@ -43,7 +46,7 @@ endpoints:
     enabled: true
     url: "https://ntfy.wwworks.com/app_notifications"
     headers:
-      Authorization: "Bearer {{ secrets.token }}"
+      Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
       Title: "{{ title }}"
       Priority: "{{ priority }}"
       Tags: "{{ emoji or 'speech_balloon' }}"

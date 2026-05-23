@@ -75,7 +75,21 @@ Available in every `headers` value, `body`, and `url`:
 | `{{ secrets.X }}` | A value from this endpoint's `secrets` block |
 
 Missing fields render as empty strings rather than erroring (e.g.
-`{{ payload.nope.deep }}` → `""`).
+`{{ payload.nope.deep }}` → `""`). Headers that render to an empty value are
+dropped from the outgoing request.
+
+### ntfy auth is optional
+
+A token is recommended but not required — it works against ntfy instances with
+no auth or public topics. The example config sends `Authorization` only when a
+token is set:
+
+```yaml
+Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
+```
+
+With `NTFY_TOKEN` empty the rendered value is blank, so the header is omitted
+entirely rather than sending an invalid `Bearer ` value.
 
 ### Inbound payload formats
 

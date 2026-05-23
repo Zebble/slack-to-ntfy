@@ -34,7 +34,7 @@ def test_build_request_renders_proxmox_style_target():
     assert body == "VM 101 stopped"
 
 
-def test_missing_payload_field_renders_empty():
+def test_empty_header_is_dropped():
     endpoint = EndpointConfig(
         name="x",
         url="https://ntfy.example.com/x",
@@ -43,4 +43,26 @@ def test_missing_payload_field_renders_empty():
     )
     ctx = build_context({"text": "hi"})
     _, _, headers, _ = build_request(endpoint, ctx)
-    assert headers["Title"] == ""
+    assert "Title" not in headers
+
+
+def test_auth_header_optional_without_token():
+    auth = "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
+    ctx = build_context({"text": "hi"})
+
+    # No token configured -> Authorization header is omitted entirely.
+    no_token = EndpointConfig(
+        name="x", url="https://ntfy.example.com/x", headers={"Authorization": auth}
+    )
+    _, _, headers, _ = build_request(no_token, ctx)
+    assert "Authorization" not in headers
+
+    # Token present -> header is rendered.
+    with_token = EndpointConfig(
+        name="x",
+        url="https://ntfy.example.com/x",
+        headers={"Authorization": auth},
+        secrets={"token": "tk"},
+    )
+    _, _, headers, _ = build_request(with_token, ctx)
+    assert headers["Authorization"] == "Bearer tk"
