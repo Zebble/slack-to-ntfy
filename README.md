@@ -93,6 +93,21 @@ Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
 With `NTFY_TOKEN` empty the rendered value is blank, so the header is omitted
 entirely rather than sending an invalid `Bearer ` value.
 
+### Per-endpoint tokens
+
+Tokens are configured per endpoint, not globally:
+
+- **ntfy (outbound)** — each endpoint's `secrets.token`, used by its
+  `Authorization` header. Point endpoints at different `secrets` values (or
+  different `${...}` env vars) to send to topics that need different tokens.
+- **Slack (inbound)** — each endpoint's `inbound_token`, the token a caller
+  must present. Set a different one per endpoint, or omit it to leave that
+  endpoint open.
+
+Because docker compose injects the whole `.env` (`env_file`), you can add as
+many per-endpoint token variables as you like without touching the compose
+file — just reference them from `config.yaml`.
+
 ### Inbound payload formats
 
 Accepts what Slack accepts: a JSON body (`application/json`), a form-encoded
@@ -119,15 +134,17 @@ forward, `404`/`403`/`401` for unknown/disabled/unauthorized endpoints, and
 
 ## Configuration via environment
 
-Set these in `.env` (see [`.env.example`](.env.example)). The app loads `.env`
-on startup via `python-dotenv`, and docker compose loads it for `${VAR}`
-interpolation — so the same file works for Docker and local runs. Real
+Set these in `.env` (see [`.env.example`](.env.example)). docker compose
+injects the whole file into the container (`env_file`) and also uses it for
+`${VAR}` interpolation; the app loads it directly for local runs. Real
 environment variables always override `.env`.
+
+Token variables are referenced from `config.yaml` and are up to you — add one
+per endpoint (e.g. `NTFY_TOKEN`, `NTFY_TOKEN_APP`, `INBOUND_TOKEN_APP`) and they
+all reach the container. The fixed knobs are:
 
 | Variable          | Default                | Purpose |
 |-------------------|------------------------|---------|
-| `NTFY_TOKEN`      | —                      | ntfy token; referenced as `${NTFY_TOKEN}` in `config.yaml` |
-| `INBOUND_TOKEN`   | —                      | Inbound token for endpoints using `inbound_token` |
 | `HOST_PORT`       | `8080`                 | Host port published by docker compose |
 | `CONFIG_PATH`     | `/config/config.yaml`  | Path to the config file |
 | `LOG_LEVEL`       | `INFO`                 | Logging verbosity |

@@ -4,14 +4,14 @@ services:
     image: slack-to-ntfy:latest
     container_name: slack-to-ntfy
     restart: unless-stopped
-    # Values below come from .env (auto-loaded by compose). See .env.example.
+    # HOST_PORT is interpolated from the auto-loaded .env. See .env.example.
     ports:
       - "${HOST_PORT:-8080}:8080"
-    environment:
-      # Referenced as ${NTFY_TOKEN} / ${INBOUND_TOKEN} in config.yaml.
-      - NTFY_TOKEN=${NTFY_TOKEN:-}
-      - INBOUND_TOKEN=${INBOUND_TOKEN:-}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - FORWARD_TIMEOUT=${FORWARD_TIMEOUT:-10}
+    # Inject the whole .env into the container so any per-endpoint token var
+    # referenced from config.yaml (e.g. ${NTFY_TOKEN_APP}) is available without
+    # listing it here. required:false keeps `up` working before .env exists.
+    env_file:
+      - path: .env
+        required: false
     volumes:
       - ./config.yaml:/config/config.yaml:ro

@@ -14,14 +14,19 @@ endpoints:
   - name: alerts
     url: "https://ntfy.example.com/alerts"
     headers:
+      Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
       Title: "{{ title }}"
       Priority: "{{ priority }}"
     body: "{{ message }}"
     secrets:
-      token: "tk"
+      token: "tk_alerts"
   - name: secured
     url: "https://ntfy.example.com/secured"
+    headers:
+      Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
     body: "{{ message }}"
+    secrets:
+      token: "tk_secured"
     inbound_token: "letmein"
 """
 
@@ -66,6 +71,18 @@ def test_hook_forwards_slack_payload(client):
     assert client.captured["url"] == "https://ntfy.example.com/alerts"
     assert client.captured["headers"]["Title"] == "mon"
     assert client.captured["body"] == "boom"
+
+
+def test_per_endpoint_ntfy_token(client):
+    client.post("/hook/alerts", json={"text": "a"})
+    assert client.captured["headers"]["Authorization"] == "Bearer tk_alerts"
+
+    client.post(
+        "/hook/secured",
+        json={"text": "b"},
+        headers={"X-Slack-To-Ntfy-Token": "letmein"},
+    )
+    assert client.captured["headers"]["Authorization"] == "Bearer tk_secured"
 
 
 def test_unknown_endpoint_404(client):

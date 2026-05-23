@@ -37,12 +37,13 @@ endpoints:
       Tags: "computer"
     body: "{{ message }}"
     secrets:
-      # Optional (but recommended). Pulled from the NTFY_TOKEN env var;
-      # empty if unset, in which case the Authorization header is omitted.
+      # This endpoint's ntfy (outbound) token. Optional but recommended; empty
+      # if unset, in which case the Authorization header above is omitted.
       token: "${NTFY_TOKEN}"
 
-  # A second target that maps Slack's emoji + color onto ntfy tags/priority,
-  # and requires an inbound token for hardening.
+  # A second target with its OWN ntfy token and its own inbound (Slack-side)
+  # token — tokens are per-endpoint. It also maps Slack's emoji + color onto
+  # ntfy tags/priority.
   - name: app_notifications
     enabled: true
     url: "https://ntfy.example.com/app_notifications"
@@ -54,5 +55,10 @@ endpoints:
       Markdown: "yes"
     body: "{{ message }}"
     secrets:
-      token: "${NTFY_TOKEN}"
-    inbound_token: "${INBOUND_TOKEN}"
+      # A different ntfy token than system_alerts (point at the same env var
+      # instead if you want them to share one).
+      token: "${NTFY_TOKEN_APP}"
+    # Callers to /hook/app_notifications must present this token (via the
+    # X-Slack-To-Ntfy-Token header or ?token=). Per-endpoint; system_alerts
+    # above requires none.
+    inbound_token: "${INBOUND_TOKEN_APP}"
