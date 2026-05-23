@@ -5,27 +5,29 @@ payloads and forwards them to an [ntfy](https://ntfy.sh) instance.
 
 Lots of tools can post to a "Slack webhook" but not to ntfy. Point those tools
 at this service instead and they'll reach your ntfy topics. The transform is
-fully template-driven, modeled on the flexibility of **Proxmox VE's generic
-webhook target**: each endpoint defines a method, URL, templated headers, a
-templated body, and a bag of secrets.
+fully template-driven: each endpoint defines a method, URL, templated headers, a
+templated body, and a bag of secrets — similar to how Proxmox VE configures its
+generic webhook targets.
 
 ```
   app that speaks Slack  ──POST /hook/<name>──▶  slack-to-ntfy  ──POST──▶  ntfy
    (Slack JSON payload)                       (renders templates)      (your topic)
 ```
 
-## How it maps to the Proxmox webhook UI
+## Endpoint configuration
 
-| Proxmox field        | slack-to-ntfy config            |
-|----------------------|---------------------------------|
-| Endpoint Name        | `endpoints[].name` (→ `/hook/<name>`) |
-| Enable               | `endpoints[].enabled`           |
-| Method / URL         | `endpoints[].method` / `endpoints[].url` |
-| Headers              | `endpoints[].headers` (templated) |
-| Body                 | `endpoints[].body` (templated)  |
-| Secrets              | `endpoints[].secrets`           |
+Each endpoint describes how a Slack payload is forwarded to one ntfy topic:
 
-Templates use Jinja2, which shares Proxmox's `{{ variable }}` syntax.
+| Config key       | Purpose |
+|------------------|---------|
+| `name`           | Inbound path becomes `/hook/<name>` |
+| `enabled`        | Toggle the endpoint on or off |
+| `method` / `url` | HTTP method and target ntfy URL |
+| `headers`        | Templated request headers |
+| `body`           | Templated request body |
+| `secrets`        | Values referenced as `{{ secrets.X }}` |
+
+Templates use Jinja2 (`{{ variable }}` syntax).
 
 ## Quick start
 
@@ -43,13 +45,13 @@ referenced from `config.yaml` as `${NTFY_TOKEN}`.
 Send a test notification:
 
 ```bash
-curl -X POST http://localhost:8080/hook/dc_proxmox_alerts \
+curl -X POST http://localhost:8080/hook/system_alerts \
   -H 'Content-Type: application/json' \
   -d '{"text":"Hello from Slack format","username":"tester"}'
 ```
 
 Then reconfigure your Slack-webhook-emitting app to post to
-`http://<host>:8080/hook/dc_proxmox_alerts` instead of its Slack webhook URL.
+`http://<host>:8080/hook/system_alerts` instead of its Slack webhook URL.
 
 ## Configuration
 

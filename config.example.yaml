@@ -1,11 +1,12 @@
 # slack-to-ntfy configuration
 #
-# Each endpoint is the equivalent of one Proxmox VE "generic webhook" target.
-# An app that normally posts to a Slack incoming webhook instead posts to
+# Each endpoint defines how a Slack payload is transformed and forwarded to an
+# ntfy topic. An app that normally posts to a Slack incoming webhook instead
+# posts to
 #   http://<host>:8080/hook/<name>
 # and this service renders the templates below and forwards to ntfy.
 #
-# Template variables available (Jinja2, same {{ }} syntax as Proxmox):
+# Template variables available (Jinja2 {{ }} syntax):
 #   {{ title }}      derived title (header block / attachment title / username)
 #   {{ message }}    flattened, human-readable message body
 #   {{ text }}       the raw Slack `text` field
@@ -21,17 +22,17 @@ server:
   port: 8080
 
 endpoints:
-  # Mirrors the Proxmox screenshot: POST to a topic with an auth token,
-  # a templated Title header, a fixed tag, and the message as the body.
-  - name: dc_proxmox_alerts
+  # POST to a topic with an auth token, a templated Title header carrying a
+  # static prefix, a fixed tag, and the message as the body.
+  - name: system_alerts
     enabled: true
     method: POST
-    url: "https://ntfy.example.com/dc_proxmox_alerts"
+    url: "https://ntfy.example.com/system_alerts"
     headers:
       # Sent only when a token is configured. Headers that render empty are
       # dropped, so this works fine against ntfy instances without auth.
       Authorization: "{% if secrets.token %}Bearer {{ secrets.token }}{% endif %}"
-      Title: "DC PVE - {{ title }}"
+      Title: "Alert - {{ title }}"
       Priority: "{{ priority }}"
       Tags: "computer"
     body: "{{ message }}"

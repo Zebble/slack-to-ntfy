@@ -1,7 +1,6 @@
 """Configuration loading and validation.
 
-The config file is operator-controlled and intentionally mirrors the shape of
-Proxmox VE's generic webhook target: each endpoint defines a method, URL,
+The config file is operator-controlled. Each endpoint defines a method, URL,
 templated headers, a templated body, and a bag of secrets.
 """
 

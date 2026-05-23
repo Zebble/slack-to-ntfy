@@ -3,13 +3,13 @@ from app.forwarder import build_request
 from app.slack import build_context
 
 
-def test_build_request_renders_proxmox_style_target():
+def test_build_request_renders_templated_target():
     endpoint = EndpointConfig(
-        name="dc_proxmox_alerts",
-        url="https://ntfy.example.com/dc_proxmox_alerts",
+        name="system_alerts",
+        url="https://ntfy.example.com/system_alerts",
         headers={
             "Authorization": "Bearer {{ secrets.token }}",
-            "Title": "DC PVE - {{ title }}",
+            "Title": "Alert - {{ title }}",
             "Priority": "{{ priority }}",
             "Tags": "computer",
         },
@@ -18,20 +18,20 @@ def test_build_request_renders_proxmox_style_target():
     )
     ctx = build_context(
         {
-            "text": "VM 101 stopped",
-            "username": "proxmox",
+            "text": "Service stopped",
+            "username": "monitor",
             "attachments": [{"color": "danger"}],
         }
     )
     method, url, headers, body = build_request(endpoint, ctx)
 
     assert method == "POST"
-    assert url == "https://ntfy.example.com/dc_proxmox_alerts"
+    assert url == "https://ntfy.example.com/system_alerts"
     assert headers["Authorization"] == "Bearer tk_secret"
-    assert headers["Title"] == "DC PVE - proxmox"
+    assert headers["Title"] == "Alert - monitor"
     assert headers["Priority"] == "5"
     assert headers["Tags"] == "computer"
-    assert body == "VM 101 stopped"
+    assert body == "Service stopped"
 
 
 def test_empty_header_is_dropped():

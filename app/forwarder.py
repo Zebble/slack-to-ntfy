@@ -13,7 +13,7 @@ from .config import EndpointConfig
 
 # Sandboxed so operator-supplied templates can't reach Python internals.
 # ChainableUndefined makes `{{ payload.missing.field }}` render empty instead
-# of raising, matching the forgiving feel of Proxmox's template fields.
+# of raising, so a missing payload field is forgiving rather than fatal.
 _env = SandboxedEnvironment(undefined=ChainableUndefined, autoescape=False)
 
 
