@@ -1,7 +1,10 @@
 services:
   slack-to-ntfy:
+    # Pulls the prebuilt multi-arch image from GHCR by default. Pass `--build`
+    # to `docker compose up` (or run `docker compose build`) to build locally
+    # from the included Dockerfile and tag it with this same image name.
+    image: ghcr.io/zebble/slack-to-ntfy:latest
     build: .
-    image: slack-to-ntfy:latest
     container_name: slack-to-ntfy
     restart: unless-stopped
     # HOST_PORT is interpolated from the auto-loaded .env. See .env.example.

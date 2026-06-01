@@ -1,5 +1,9 @@
 # slack-to-ntfy
 
+[![CI](https://github.com/Zebble/slack-to-ntfy/actions/workflows/ci.yml/badge.svg)](https://github.com/Zebble/slack-to-ntfy/actions/workflows/ci.yml)
+[![Docker](https://github.com/Zebble/slack-to-ntfy/actions/workflows/docker.yml/badge.svg)](https://github.com/Zebble/slack-to-ntfy/actions/workflows/docker.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A small, containerized middleware that ingests **Slack incoming-webhook**
 payloads and forwards them to an [ntfy](https://ntfy.sh) instance.
 
@@ -32,15 +36,17 @@ Templates use Jinja2 (`{{ variable }}` syntax).
 ## Quick start
 
 ```bash
-git clone <this-repo> && cd slack-to-ntfy
+git clone https://github.com/Zebble/slack-to-ntfy.git && cd slack-to-ntfy
 cp config.example.yaml config.yaml      # edit topics/headers to taste
 cp .env.example .env                    # set NTFY_TOKEN etc. (gitignored)
-docker compose up -d --build
+docker compose up -d
 ```
 
-Both `config.yaml` and `.env` are gitignored so your topics and tokens stay
-local. Compose auto-loads `.env`; the values flow into the container and are
-referenced from `config.yaml` as `${NTFY_TOKEN}`.
+`docker compose` pulls the prebuilt multi-arch image from
+`ghcr.io/zebble/slack-to-ntfy:latest` by default — pass `--build` to build
+locally instead. Both `config.yaml` and `.env` are gitignored so your topics
+and tokens stay local. Compose auto-loads `.env`; the values flow into the
+container and are referenced from `config.yaml` as `${NTFY_TOKEN}`.
 
 Send a test notification:
 
@@ -178,6 +184,8 @@ all reach the container. The fixed knobs are:
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow. The short version:
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt pytest
@@ -186,3 +194,12 @@ cp config.example.yaml config.yaml
 CONFIG_PATH=./config.yaml uvicorn app.main:app --reload   # run locally
 pytest                                                    # run tests
 ```
+
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md). Please use GitHub's
+private vulnerability reporting rather than filing a public issue.
+
+## License
+
+[MIT](LICENSE) © 2026 Wade Weppler

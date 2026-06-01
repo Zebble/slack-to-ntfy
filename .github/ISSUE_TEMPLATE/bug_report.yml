@@ -1,0 +1,40 @@
+name: Bug report
+description: Something isn't working as documented
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: When I POST a Slack payload to /hook/X, I expected Y but got Z.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure ...
+        2. POST to /hook/...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant config and logs
+      description: A redacted excerpt of your config.yaml and the container logs from the failing request. Remove tokens.
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Git commit, image tag, or release version.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: e.g. Docker on Linux amd64, behind NPMPlus
