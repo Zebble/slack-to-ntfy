@@ -14,7 +14,7 @@ pytest                           # run the test suite
 CONFIG_PATH=./config.yaml uvicorn app.main:app --reload
 ```
 
-The Dockerfile and CI both target Python 3.12.
+The Dockerfile and CI both target Python 3.14.
 
 ## Pull requests
 
